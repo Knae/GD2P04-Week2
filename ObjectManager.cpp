@@ -60,11 +60,12 @@ void CObjectManager::CreateObject(	ETYPE _inType,
 	case CObjectManager::ETYPE::CUBE:
 	{
 		newObject->uiProgramID = uiProgramID_Cube_Rotating_Origin;
+		newObject->bHasOutline = true;
 		break;
 	}
 	case CObjectManager::ETYPE::DIAMOND:
 	{
-		newObject->uiProgramID = uiProgramID_Diamond_Controlled;
+		newObject->uiProgramID = uiProgramID_ColouredBaseVertex;
 		break;
 	}
 	case CObjectManager::ETYPE::MAXTYPE:
@@ -172,6 +173,10 @@ void CObjectManager::UpdateObjects(float _inDeltaTime)
 			}
 		}
  		element->m4Transform = m_pCameraRef.GetCameraMatrix_Persp() * matrixRotateAroundPoint * matrixTranslate * matrixRotate * matrixScale;
+		if (element->bHasOutline)
+		{
+			element->m4OutlineTransform = m_pCameraRef.GetCameraMatrix_Persp() * matrixRotateAroundPoint * matrixTranslate * matrixRotate * (glm::scale(glm::mat4(), m_v3OutlineScale));
+		}
 	}
 
 	for (auto element : m_vecButtons)
@@ -287,6 +292,16 @@ void CObjectManager::DrawObjects()
 		{
 			case ETYPE::CUBE:
 			{
+				if (element->bHasOutline)
+				{
+					glEnable(GL_STENCIL_TEST);
+
+					glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+
+					glStencilFunc(GL_ALWAYS, 1, 0xFF);
+
+					glStencilMask(0xFF);
+				}
 				glUseProgram(uiProgramID_Cube_Rotating_Origin);
 				//Bind given texture ID
 				glActiveTexture(GL_TEXTURE0);
@@ -296,17 +311,37 @@ void CObjectManager::DrawObjects()
 				GLint TransformMatrixLoc = glGetUniformLocation(uiProgramID_Cube_Rotating_Origin, "inputMatrix");
 				glUniformMatrix4fv(TransformMatrixLoc, 1, GL_FALSE, glm::value_ptr(element->m4Transform));
 				m_pCubeMeshRef.Draw();
+
+				if (element->bHasOutline)
+				{
+					glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+					glStencilMask(0x00);
+
+					glUseProgram(uiProgramID_ColouredBaseVertex);
+					//Pass matrices to shader
+					GLint TransformMatrixLoc = glGetUniformLocation(uiProgramID_ColouredBaseVertex, "inputMatrix");
+					glUniformMatrix4fv(TransformMatrixLoc, 1, GL_FALSE, glm::value_ptr(element->m4OutlineTransform));
+					glUniform3fv(glGetUniformLocation(uiProgramID_ColouredBaseVertex, "Colour"), 1, glm::value_ptr(glm::vec3(1.0f, 0.0f, 0.0f)));
+					glUniform1i(glGetUniformLocation(uiProgramID_ColouredBaseVertex, "UseInputColour"), 1);
+					m_pCubeMeshRef.Draw();
+
+					glStencilMask(0x00);
+					glDisable(GL_STENCIL_TEST);
+					glStencilMask(0xFF);
+				}
+
 				glBindTexture(GL_TEXTURE_2D, 0);
 				glUseProgram(0);
 				break;
 			}
 			case ETYPE::DIAMOND:
 			{
-				glUseProgram(uiProgramID_Diamond_Controlled);
+				glUseProgram(uiProgramID_ColouredBaseVertex);
 				////Pass colour to shader
-				//glUniform3fv(glGetUniformLocation(uiProgramID_Diamond_Controlled, "Colour"), 1, glm::value_ptr(element->v3Colour));
+				//glUniform3fv(glGetUniformLocation(uiProgramID_ColouredBaseVertex, "Colour"), 1, glm::value_ptr(glm::vec3(1.0f, 0.0f, 0.0f)));
+				glUniform1i(glGetUniformLocation(uiProgramID_ColouredBaseVertex, "UseInputColour"), 0);
 				//Pass matrices to shader
-				GLint TransformMatrixLoc = glGetUniformLocation(uiProgramID_Diamond_Controlled, "inputMatrix");
+				GLint TransformMatrixLoc = glGetUniformLocation(uiProgramID_ColouredBaseVertex, "inputMatrix");
 				glUniformMatrix4fv(TransformMatrixLoc, 1, GL_FALSE, glm::value_ptr(element->m4Transform));
 				m_pDiamondRef.Draw();
 				glUseProgram(0);
@@ -402,7 +437,7 @@ void CObjectManager::SetupTextures()
 void CObjectManager::SetupPrograms()
 {
 	uiProgramID_Cube_Rotating_Origin = ShaderLoader::CreateProgram(m_kcFileLocation_TexturedVertex, m_kcFileLocation_OneTextureFrag);
-	uiProgramID_Diamond_Controlled = ShaderLoader::CreateProgram(m_kcFileLocation_ColouredBaseVertex, m_kcFileLocation_BaseFrag);
+	uiProgramID_ColouredBaseVertex = ShaderLoader::CreateProgram(m_kcFileLocation_ColouredBaseVertex, m_kcFileLocation_BaseFrag);
 	uiProgramID_Button = ShaderLoader::CreateProgram(m_kcFileLocation_ButtonVertex, m_kcFileLocation_OneTextureFrag);
 }
 

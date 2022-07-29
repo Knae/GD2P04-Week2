@@ -59,6 +59,9 @@ public:
 		glm::vec3 v3RotatePoint = glm::vec3(0.0f);
 		float fRotationSpeed = 0.0f;
 		bool bIsControlled = false;
+		bool bHasOutline = false;
+		glm::mat4 m4OutlineTransform = glm::mat4();
+		
 	} TObj;
 
 	static CObjectManager& GetRef()
@@ -112,7 +115,8 @@ private:
 	CSquare& m_pSquareRef = CSquare::GetRef();
 	CCamera& m_pCameraRef = CCamera::GetRef();
 	//Variables
-	
+	const glm::vec3 m_v3OutlineScale = glm::vec3(1.01f);
+
 	//Object collections
 	std::vector<TObject*> m_vecObjects;
 	std::vector<CButton*> m_vecButtons;
@@ -135,7 +139,8 @@ private:
 
 	//OpenGL Program IDs
 	GLuint uiProgramID_Cube_Rotating_Origin = 0;
-	GLuint uiProgramID_Diamond_Controlled = 0;
+	GLuint uiProgramID_Cube_Outlined = 0;
+	GLuint uiProgramID_ColouredBaseVertex = 0;
 	GLuint uiProgramID_Button = 0;
 	//constants
 	const float m_fMoveSpeed = 2.0f;
