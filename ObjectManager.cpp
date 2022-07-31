@@ -172,10 +172,10 @@ void CObjectManager::UpdateObjects(float _inDeltaTime)
 				matrixRotate = glm::mat4();
 			}
 		}
- 		element->m4Transform = m_pCameraRef.GetCameraMatrix_Persp() * matrixRotateAroundPoint * matrixTranslate * matrixRotate * matrixScale;
+ 		element->m4Transform = /*m_pCameraRef.GetCameraMatrix_Persp() * */matrixRotateAroundPoint * matrixTranslate * matrixRotate * matrixScale;
 		if (element->bHasOutline)
 		{
-			element->m4OutlineTransform = m_pCameraRef.GetCameraMatrix_Persp() * matrixRotateAroundPoint * matrixTranslate * matrixRotate * (glm::scale(glm::mat4(), m_v3OutlineScale));
+			element->m4OutlineTransform = /*m_pCameraRef.GetCameraMatrix_Persp() * */matrixRotateAroundPoint * matrixTranslate * matrixRotate * (glm::scale(glm::mat4(), (element->v3Scale *m_v3OutlineScale)));
 		}
 	}
 
@@ -309,7 +309,9 @@ void CObjectManager::DrawObjects()
 				glUniform1i(glGetUniformLocation(uiProgramID_Cube_Rotating_Origin, "ImageTexture1"), 0);
 				//Pass matrices to shader
 				GLint TransformMatrixLoc = glGetUniformLocation(uiProgramID_Cube_Rotating_Origin, "inputMatrix");
+				GLint CameraMatrixLoc = glGetUniformLocation(uiProgramID_Cube_Rotating_Origin, "inputCameraMatrix");
 				glUniformMatrix4fv(TransformMatrixLoc, 1, GL_FALSE, glm::value_ptr(element->m4Transform));
+				glUniformMatrix4fv(CameraMatrixLoc, 1, GL_FALSE, glm::value_ptr(m_pCameraRef.GetCameraMatrix_Persp()));
 				m_pCubeMeshRef.Draw();
 
 				if (element->bHasOutline)
@@ -319,8 +321,10 @@ void CObjectManager::DrawObjects()
 
 					glUseProgram(uiProgramID_ColouredBaseVertex);
 					//Pass matrices to shader
-					GLint TransformMatrixLoc = glGetUniformLocation(uiProgramID_ColouredBaseVertex, "inputMatrix");
+					TransformMatrixLoc = glGetUniformLocation(uiProgramID_ColouredBaseVertex, "inputMatrix");
+					CameraMatrixLoc = glGetUniformLocation(uiProgramID_ColouredBaseVertex, "inputCameraMatrix");
 					glUniformMatrix4fv(TransformMatrixLoc, 1, GL_FALSE, glm::value_ptr(element->m4OutlineTransform));
+					glUniformMatrix4fv(CameraMatrixLoc, 1, GL_FALSE, glm::value_ptr(m_pCameraRef.GetCameraMatrix_Persp()));
 					glUniform3fv(glGetUniformLocation(uiProgramID_ColouredBaseVertex, "Colour"), 1, glm::value_ptr(glm::vec3(1.0f, 0.0f, 0.0f)));
 					glUniform1i(glGetUniformLocation(uiProgramID_ColouredBaseVertex, "UseInputColour"), 1);
 					m_pCubeMeshRef.Draw();
@@ -342,6 +346,8 @@ void CObjectManager::DrawObjects()
 				glUniform1i(glGetUniformLocation(uiProgramID_ColouredBaseVertex, "UseInputColour"), 0);
 				//Pass matrices to shader
 				GLint TransformMatrixLoc = glGetUniformLocation(uiProgramID_ColouredBaseVertex, "inputMatrix");
+				GLint CameraMatrixLoc = glGetUniformLocation(uiProgramID_ColouredBaseVertex, "inputCameraMatrix");
+				glUniformMatrix4fv(CameraMatrixLoc, 1, GL_FALSE, glm::value_ptr(m_pCameraRef.GetCameraMatrix_Persp()));
 				glUniformMatrix4fv(TransformMatrixLoc, 1, GL_FALSE, glm::value_ptr(element->m4Transform));
 				m_pDiamondRef.Draw();
 				glUseProgram(0);

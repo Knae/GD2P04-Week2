@@ -115,7 +115,7 @@ private:
 	CSquare& m_pSquareRef = CSquare::GetRef();
 	CCamera& m_pCameraRef = CCamera::GetRef();
 	//Variables
-	const glm::vec3 m_v3OutlineScale = glm::vec3(1.01f);
+	const glm::vec3 m_v3OutlineScale = glm::vec3(1.05f);
 
 	//Object collections
 	std::vector<TObject*> m_vecObjects;

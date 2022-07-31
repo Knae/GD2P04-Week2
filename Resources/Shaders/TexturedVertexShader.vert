@@ -7,9 +7,10 @@ layout (location = 1) in vec2 TexturePos;
 out vec2 FragTexturePos;
 //Inputs
 uniform mat4 inputMatrix;
+uniform mat4 inputCameraMatrix;
 
 void main()
 {
-	gl_Position = inputMatrix * vec4(Position, 1.0f);
+	gl_Position = inputCameraMatrix * inputMatrix * vec4(Position, 1.0f);
 	FragTexturePos = TexturePos;
 }
